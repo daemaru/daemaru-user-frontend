@@ -34,6 +34,16 @@ function App() {
       location: '2-3 세미나실',
       description: '회의를 해요',
       target: '대마루 팀원'
+    },
+    {
+      id: '2',
+      title: '밥 먹기',
+      start: new Date(2025, 1, 16),
+      end: new Date(2025, 1, 25),
+      period: '점심 시간',
+      location: '급식실',
+      description: '밥 먹기',
+      target: '박지민'
     }
   ]
 

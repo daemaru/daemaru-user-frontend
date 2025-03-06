@@ -9,8 +9,6 @@ interface PropsType {
   month: number
 }
 
-const today = new Date()
-
 const Calendar = ({ events, year, month }: PropsType) => {
   const weeks = changeDate(year, month)
   const weekCount = weeks.length
@@ -25,7 +23,7 @@ const Calendar = ({ events, year, month }: PropsType) => {
   }
 
   const assignEventPositions = (weekEvents: Event[], weekDates: (number | string)[]) => {
-    const { weekStart } = getWeekBoundaries(weekDates)
+    const { weekStart, weekEnd } = getWeekBoundaries(weekDates)
     const eventPositions: { [key: string]: number } = {}
     const eventRows: { [key: number]: Event[] } = {}
 
@@ -36,22 +34,23 @@ const Calendar = ({ events, year, month }: PropsType) => {
 
     sortedEvents.forEach((event) => {
       const eventStart = new Date(event.start)
-      const startOffset = Math.max(
-        0,
-        Math.floor((eventStart.getTime() - weekStart.getTime()) / (1000 * 60 * 60 * 24))
-      )
+      const eventEnd = new Date(event.end)
+      const adjustedStart = new Date(Math.max(eventStart.getTime(), weekStart.getTime()))
+      const adjustedEnd = new Date(Math.min(eventEnd.getTime(), weekEnd.getTime()))
 
       // 겹치지 않는 첫 번째 행 찾기
       let row = 0
       while (true) {
         const rowEvents = eventRows[row] || []
         const isOverlapping = rowEvents.some((existingEvent) => {
-          const existingStart = new Date(existingEvent.start)
-          const existingEnd = new Date(existingEvent.end)
-          const currentStart = new Date(event.start)
-          const currentEnd = new Date(event.end)
+          const existingStart = new Date(
+            Math.max(new Date(existingEvent.start).getTime(), weekStart.getTime())
+          )
+          const existingEnd = new Date(
+            Math.min(new Date(existingEvent.end).getTime(), weekEnd.getTime())
+          )
 
-          return currentStart <= existingEnd && currentEnd >= existingStart
+          return adjustedStart <= existingEnd && adjustedEnd >= existingStart
         })
 
         if (!isOverlapping) {
@@ -78,22 +77,26 @@ const Calendar = ({ events, year, month }: PropsType) => {
     })
   }
 
-  const calculateEventPosition = (event: Event, weekDates: (number | string)[]) => {
-    const { weekStart } = getWeekBoundaries(weekDates)
+  const calculateEventPosition = (event: Event, weekDates: number[]) => {
+    const { weekStart, weekEnd } = getWeekBoundaries(weekDates)
     const eventStart = new Date(event.start)
     const eventEnd = new Date(event.end)
 
-    const startOffset = Math.max(
-      0,
-      Math.floor((eventStart.getTime() - weekStart.getTime()) / (1000 * 60 * 60 * 24))
-    )
+    const effectiveStart = eventStart < weekStart ? weekStart : eventStart
+    const effectiveEnd = eventEnd > weekEnd ? weekEnd : eventEnd
 
-    const duration = Math.min(
-      7 - startOffset,
-      Math.floor((eventEnd.getTime() - eventStart.getTime()) / (1000 * 60 * 60 * 24)) + 1
+    const startOffset = Math.floor(
+      (effectiveStart.getTime() - weekStart.getTime()) / (1000 * 60 * 60 * 24)
     )
+    const duration =
+      Math.floor((effectiveEnd.getTime() - effectiveStart.getTime()) / (1000 * 60 * 60 * 24)) + 1
 
-    return { startOffset, duration }
+    return {
+      startOffset,
+      duration,
+      isStartOfEvent: eventStart >= weekStart,
+      isEndOfEvent: eventEnd <= weekEnd
+    }
   }
 
   return (
@@ -130,7 +133,8 @@ const Calendar = ({ events, year, month }: PropsType) => {
                 </div>
                 <div className="absolute left-0 right-0 top-8">
                   {weekEvents.map((event) => {
-                    const { startOffset, duration } = calculateEventPosition(event, week)
+                    const { startOffset, duration, isStartOfEvent, isEndOfEvent } =
+                      calculateEventPosition(event, week)
                     const rowPosition = eventPositions[event.id]
                     return (
                       <div
@@ -142,12 +146,20 @@ const Calendar = ({ events, year, month }: PropsType) => {
                           top: `${rowPosition * 17}px`,
                           padding: '1px 4px',
                           overflow: 'hidden',
-                          textOverflow: 'ellipsis'
+                          textOverflow: 'ellipsis',
+                          borderTopLeftRadius: isStartOfEvent ? '0.375rem' : 0,
+                          borderBottomLeftRadius: isStartOfEvent ? '0.375rem' : 0,
+                          borderTopRightRadius: isEndOfEvent ? '0.375rem' : 0,
+                          borderBottomRightRadius: isEndOfEvent ? '0.375rem' : 0
                         }}
                         title={event.title}
                       >
-                        <div className="rounded-full bg-[#ff8a3d] w-1 h-1"></div>
-                        {event.title}
+                        {isStartOfEvent ? (
+                          <div className="rounded-full bg-[#ff8a3d] w-1 h-1"></div>
+                        ) : (
+                          ''
+                        )}
+                        {isStartOfEvent ? event.title : ''}
                       </div>
                     )
                   })}
