@@ -1,4 +1,4 @@
-export const DayOfTheWeek = ['월', '화', '수', '목', '금', '토', '일']
+export const DayOfTheWeek = ['일', '월', '화', '수', '목', '금', '토']
 export const Months = [
   'January',
   'February',
