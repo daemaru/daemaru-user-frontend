@@ -2,6 +2,7 @@ import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
+import https from 'https'
 
 function createWindow(): void {
   // Create the browser window.
@@ -13,6 +14,8 @@ function createWindow(): void {
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
       sandbox: false
     }
   })
@@ -72,3 +75,20 @@ app.on('window-all-closed', () => {
 
 // In this file you can include the rest of your app"s specific main process
 // code. You can also put them in separate files and require them here.
+ipcMain.handle('fetch-schedules', async () => {
+  return new Promise((resolve, reject) => {
+    https
+      .get(import.meta.env.MAIN_VITE_BASE_URL, (resp) => {
+        let data = ''
+        resp.on('data', (chunk) => {
+          data += chunk
+        })
+        resp.on('end', () => {
+          resolve(JSON.parse(data))
+        })
+      })
+      .on('error', (err) => {
+        reject(err)
+      })
+  })
+})
