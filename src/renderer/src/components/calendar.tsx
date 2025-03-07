@@ -178,7 +178,7 @@ const Calendar = ({ events, year, month }: PropsType) => {
                   <div className="rounded-full bg-[#ff8a3d] w-1 h-1"></div>
                   <span>{event.title}</span>
                 </div>
-                <span className="px-2">{event.description}</span>
+                <span className="px-2 text-sm">{event.description}</span>
                 <div className="px-2 flex flex-col text-[#71717a] text-xs">
                   <span>{`시간: ${event.period}`}</span>
                   <span>{`장소: ${event.location}`}</span>
