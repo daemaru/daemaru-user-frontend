@@ -1,16 +1,17 @@
-import { Logo } from './assets'
+import { Arrow, Logo } from './assets'
+import Calendar from './components/calendar'
 import Day from './components/day'
 import { changeDate } from './function/getCalendar'
 import { useEffect, useState } from 'react'
+import { DayOfTheWeek, Months, Event } from './types/enum'
 
-const DayOfTheWeek = ['월', '화', '수', '목', '금', '토', '일']
-const Example = ['다문화 이해 교육', '모의 토익', '기말고사']
 const today = new Date()
 
 function App() {
   const [showSidebar, setShowSidebar] = useState(true)
-  const calendar = [today.getFullYear(), today.getMonth() + 1]
-  const calendarData = changeDate(calendar[0], calendar[1])
+  const sideCalendar = [today.getFullYear(), today.getMonth() + 1]
+  const sideCalendarData = changeDate(sideCalendar[0], sideCalendar[1])
+  const [selectMonth, setSelectMonth] = useState([today.getFullYear(), today.getMonth()])
 
   useEffect(() => {
     const handleResize = () => {
@@ -23,8 +24,31 @@ function App() {
     }
   }, [])
 
+  const defaultEvents: Event[] = [
+    {
+      id: '1',
+      title: '프로젝트 회의',
+      start: new Date(2025, 1, 15),
+      end: new Date(2025, 1, 22),
+      period: '1교시 ~ 4교시',
+      location: '2-3 세미나실',
+      description: '회의를 해요',
+      target: '대마루 팀원'
+    },
+    {
+      id: '2',
+      title: '밥 먹기',
+      start: new Date(2025, 1, 16),
+      end: new Date(2025, 1, 25),
+      period: '점심 시간',
+      location: '급식실',
+      description: '밥 먹기',
+      target: '박지민'
+    }
+  ]
+
   return (
-    <div className="flex">
+    <div className="flex w-screen h-screen">
       {showSidebar && (
         <div className="flex flex-col h-screen p-10 text-white bg-custom-bg w-fit min-w-[450px]">
           <Logo />
@@ -42,7 +66,7 @@ function App() {
               ))}
             </div>
             <div className="flex flex-col justify-between w-full h-full bg-transparent/5">
-              {calendarData.map((week, i) => (
+              {sideCalendarData.map((week, i) => (
                 <div className="flex justify-between" key={i}>
                   {week.map((date, j) => (
                     <Day date={date} week={i} key={j} />
@@ -52,16 +76,46 @@ function App() {
             </div>
           </div>
           <div className="flex flex-col gap-1 mt-4 overflow-y-scroll scrollbar-none">
-            {Example.map((schedule) => (
-              <div className="flex items-center gap-2">
-                <div className="bg-[#ff8a3d] w-2 h-2 rounded-full"></div>
-                <div>{schedule}</div>
-              </div>
-            ))}
+            {defaultEvents.map((schedule) => {
+              if (
+                schedule.start.getMonth() === today.getMonth() ||
+                schedule.end.getMonth() === today.getMonth()
+              ) {
+                return (
+                  <div className="flex items-center gap-2">
+                    <div className="bg-[#ff8a3d] w-2 h-2 rounded-full"></div>
+                    <div>{schedule.title}</div>
+                  </div>
+                )
+              }
+            })}
           </div>
         </div>
       )}
-      <div className="w-full"></div>
+      <div className="flex flex-col w-full">
+        <div className="px-10 py-7">
+          <div className="flex items-center gap-8">
+            <Arrow
+              direction="left"
+              onClick={() =>
+                selectMonth[1] === 0
+                  ? setSelectMonth([selectMonth[0] - 1, 11])
+                  : setSelectMonth([selectMonth[0], selectMonth[1] - 1])
+              }
+            />
+            <Arrow
+              direction="right"
+              onClick={() =>
+                selectMonth[1] === 11
+                  ? setSelectMonth([selectMonth[0] + 1, 0])
+                  : setSelectMonth([selectMonth[0], selectMonth[1] + 1])
+              }
+            />
+            <span className="text-2xl font-semibold text-[#ff8a3d]">{Months[selectMonth[1]]}</span>
+          </div>
+        </div>
+        <Calendar events={defaultEvents} year={selectMonth[0]} month={selectMonth[1] + 1} />
+      </div>
     </div>
   )
 }
