@@ -4,6 +4,9 @@ import Day from './components/day'
 import { changeDate } from './function/getCalendar'
 import { useEffect, useState } from 'react'
 import { DayOfTheWeek, Months, Event } from './types/enum'
+import { eventTransform } from './function/eventTransform'
+import { getSchedules } from './apis/schedules'
+import { useSchedules } from './hooks/useSchedules'
 
 const today = new Date()
 
@@ -12,6 +15,12 @@ function App() {
   const sideCalendar = [today.getFullYear(), today.getMonth() + 1]
   const sideCalendarData = changeDate(sideCalendar[0], sideCalendar[1])
   const [selectMonth, setSelectMonth] = useState([today.getFullYear(), today.getMonth()])
+  const { data } = useSchedules()
+  const [event, setEvent] = useState<Event[]>([])
+
+  useEffect(() => {
+    setEvent(eventTransform(data?.schedules))
+  }, [data])
 
   useEffect(() => {
     const handleResize = () => {
@@ -23,29 +32,6 @@ function App() {
       window.removeEventListener('resize', handleResize)
     }
   }, [])
-
-  const defaultEvents: Event[] = [
-    {
-      id: '1',
-      title: '프로젝트 회의',
-      start: new Date(2025, 1, 15),
-      end: new Date(2025, 1, 22),
-      period: '1교시 ~ 4교시',
-      location: '2-3 세미나실',
-      description: '회의를 해요',
-      target: '대마루 팀원'
-    },
-    {
-      id: '2',
-      title: '밥 먹기',
-      start: new Date(2025, 1, 16),
-      end: new Date(2025, 1, 25),
-      period: '점심 시간',
-      location: '급식실',
-      description: '밥 먹기',
-      target: '박지민'
-    }
-  ]
 
   return (
     <div className="flex w-screen h-screen">
@@ -76,7 +62,7 @@ function App() {
             </div>
           </div>
           <div className="flex flex-col gap-1 mt-4 overflow-y-scroll scrollbar-none">
-            {defaultEvents.map((schedule) => {
+            {event.map((schedule) => {
               if (
                 schedule.start.getMonth() === today.getMonth() ||
                 schedule.end.getMonth() === today.getMonth()
@@ -114,7 +100,7 @@ function App() {
             <span className="text-2xl font-semibold text-[#ff8a3d]">{Months[selectMonth[1]]}</span>
           </div>
         </div>
-        <Calendar events={defaultEvents} year={selectMonth[0]} month={selectMonth[1] + 1} />
+        <Calendar events={event} year={selectMonth[0]} month={selectMonth[1] + 1} />
       </div>
     </div>
   )
